@@ -82,3 +82,9 @@ To easily visualize the training result, you could use `darknet_demo_images.py` 
         --dont_show --write_image \
         --thresh 0.7
     ```
+
+## Download Youtube Video and Convert to Frames
+
+### Purpose
+
+This tool can help you to download videos or live streams on Youtube and parse them into frames to generate dataset images. Please read the README in yt_downloader folder for more detail.

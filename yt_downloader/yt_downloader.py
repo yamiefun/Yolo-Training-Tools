@@ -6,14 +6,14 @@ import argparse
 import os
 import json
 
-
+SUPPORT_URL_TYPE = ["youtube", "youtube-dl"]
 class YotubeDownloader:
     def __init__(self, arguments: dict) -> None:
         self.url = arguments["url"]
         self.url_type = arguments["url_type"]
-        if self.url_type not in ['http', 'rtsp']:
+        if self.url_type not in SUPPORT_URL_TYPE:
             raise ValueError(f'url_type: {self.url_type} not supported. '
-                             f'Only support "http" and "rtsp".')
+                             f'Please see README.md for more info.')
 
         self.output_path = self._build_output_folder(arguments["folder_name"])
         self.is_live = arguments["is_live"]
@@ -61,12 +61,12 @@ class YotubeDownloader:
     def _read_stream(self, url: str, que: mp.Queue) -> None:
         """ Read youtube stream frames and put to queue.
 
-            This function will handle different url type (http/rtsp) and
-            different media type (video/live stream).
+            This function will handle different url type and different media
+            type (video/live stream).
 
-            For http, this function will connect it through pafy to obtain the
-            best quality. For rtsp otherwise, it will be connected directly by
-            opencv.
+            For youtube, this function will connect it through pafy to obtain
+            the best quality. For youtube-dl otherwise, it will be connected
+            directly by opencv.
 
             For offline video, frame drop is handled by this function by
             calculating the drop frame interval with FPS. For live stream,
@@ -81,7 +81,7 @@ class YotubeDownloader:
         """
         capture = None
         while not capture or not capture.isOpened():
-            if self.url_type == 'http':
+            if self.url_type == 'youtube':
                 video = pafy.new(url)
                 best = video.getbest()
                 url = best.url
