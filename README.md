@@ -87,4 +87,4 @@ To easily visualize the training result, you could use `darknet_demo_images.py` 
 
 ### Purpose
 
-This tool can help you to download videos or live streams on Youtube and parse them into frames to generate dataset images. Please read the README in yt_downloader folder for more detail.
+This tool can help you to download videos or live streams on Youtube and parse them into frames to generate dataset images. Please read the [README](https://github.com/yamiefun/Yolo-Training-Tools/blob/main/yt_downloader/README.md) in yt_downloader folder for more detail.
