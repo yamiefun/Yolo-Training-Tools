@@ -6,7 +6,6 @@ import sys
 import json
 import multiprocessing as mp
 from multiprocessing import Pool
-import tqdm
 
 COCO_LABEL_FILE = "coco_labels.txt"
 SUPPORTED_MODE = {"union", "intersection"}
