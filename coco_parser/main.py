@@ -4,6 +4,9 @@ import os
 import argparse
 import sys
 import json
+import multiprocessing as mp
+from multiprocessing import Pool
+import tqdm
 
 COCO_LABEL_FILE = "coco_labels.txt"
 SUPPORTED_MODE = {"union", "intersection"}
@@ -43,8 +46,11 @@ class COCOParser:
         self._check_target_valid(self.target)
         self.image_save_path = args['image_output_folder']
         self.label_save_path = args['label_output_folder']
-        self.download_mode = args['download_mode']
+        self.download_mode = args['filter_mode']
         self.download_num = args['download_num']
+        self.parallel = args["parallel"]
+        self.debug = args["debug"]
+        self.target_map = {}
 
     def _create_obj_name_file(self, target: list[str]) -> None:
         """ Create `obj.names` for yolov4 training.
@@ -133,7 +139,7 @@ class COCOParser:
             for cat_id in cat_ids:
                 image_ids.extend(
                     (self.coco.getImgIds(catIds=cat_id))[:download_num])
-            return image_ids
+            return list(set(image_ids))
         elif mode == 'intersection':
             return self.coco.getImgIds(catIds=cat_id)
 
@@ -144,10 +150,9 @@ class COCOParser:
         target = list(self.target)
         self._create_obj_name_file(target)
         # mapping between coco cat id and custom cat id
-        target_map = {}
         for idx, category in enumerate(target):
             coco_cat_id = self.coco.getCatIds(catNms=[category])[0]
-            target_map[coco_cat_id] = idx
+            self.target_map[coco_cat_id] = idx
 
         # get all coco catId
         cat_ids = self.coco.getCatIds(catNms=target)
@@ -160,6 +165,42 @@ class COCOParser:
         total_num, count = len(image_ids), 0
         images = self.coco.loadImgs(image_ids)
         print(f"Total image count: {total_num}")
+        # print(f"{len(images)}")
+        if self.parallel:
+            pool = Pool(mp.cpu_count())
+            pool.map(self._download_helper, images)
+        else:
+            for image in images:
+                self._download_helper(image)
+
+    def _download_helper(self, image):
+        # download image
+        image_data = requests.get(image['coco_url']).content
+
+        # save image
+        save_path = \
+            f"{os.path.join(self.image_save_path, image['file_name'])}"
+        with open(save_path, "wb") as handler:
+            handler.write(image_data)
+
+        # get annotation
+        annotation_ids = self.coco.getAnnIds(imgIds=image['id'])
+        annotations = self.coco.loadAnns(annotation_ids)
+
+        # create yolo format label file
+        label_file_name = \
+            f"{self.label_save_path}/{image['file_name'][:-4]}.txt"
+
+        with open(label_file_name, 'w') as f:
+            for instance in annotations:
+                if instance['category_id'] not in self.target_map:
+                    continue
+                line = self._instance_transformation(
+                    self.target_map, instance, image)
+                f.write(line)
+        if self.debug:
+            print("finish images id ", image['id'])
+        """
         for image in images:
             # download image
             image_data = requests.get(image['coco_url']).content
@@ -190,6 +231,7 @@ class COCOParser:
             print(f"Progress: {count*100/total_num:.2f}% "
                   f"({count}/{total_num})")
             count += 1
+        """
 
 
 def main():

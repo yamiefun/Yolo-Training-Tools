@@ -1,8 +1,10 @@
 {
     "coco_annotation": "instances_train2017.json",
-    "image_output_folder": "image",
-    "label_output_folder": "label",
-    "download_mode": "union",
+    "image_output_folder": "obj",
+    "label_output_folder": "obj",
+    "filter_mode": "union",
     "download_num": "min",
-    "target_category": "target.txt"
+    "target_category": "target.txt",
+    "parallel": true,
+    "debug": false
 }
